@@ -1,0 +1,205 @@
+<!-- my_form.html -->
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Form</title>
+</head>
+<body>
+    <h1>My Form</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Form</title>
+    <script>
+        // Function to fetch blocks from Python function using AJAX
+        function fetchBlocks() {
+            fetch('/run/get_blocks')  // Assuming your Python function endpoint is '/get_blocks'
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    const blockDropdown = document.getElementById('block');
+                    blockDropdown.innerHTML = '';
+                    data.blocks.forEach(block => {
+                        const optionElement = document.createElement('option');
+                        optionElement.textContent = block;
+                        blockDropdown.appendChild(optionElement);
+                    });
+                    // Trigger update for project dropdown based on initial block selection
+                    updateProjectOptions();
+                })
+                .catch(error => console.error('Error fetching blocks:', error));
+        }
+
+        // Function to fetch projects based on block selection from Python function using AJAX
+        function fetchProjects(block) {
+            const projectDropdown = document.getElementById('project');
+            fetch('/run/get_projects/' + block+'/')  // Assuming your Python function endpoint is '/get_projects'
+            .then(response => response.json())
+            .then(data => {
+                // const projectDropdown = document.getElementById('project');
+                console.log(data);
+                projectDropdown.innerHTML = '';
+                if (data.programs) { // Check if data.projects exists
+                    data.programs.forEach(project => {
+                        const optionElement = document.createElement('option');
+                        optionElement.textContent = project;
+                        projectDropdown.appendChild(optionElement);
+                    });
+                } else {
+                    console.error('No projects found for block:', block);
+                }
+                    updateProjectSetupOptions();
+                })
+                .catch(error => console.error('Error fetching projects:', error));
+        }
+
+        // Function to update project dropdown based on block selection
+        function updateProjectOptions() {
+            const blockDropdown = document.getElementById('block');
+            const selectedBlock = blockDropdown.value;
+            fetchProjects(selectedBlock);
+        }
+
+        // Function to update project setup dropdown based on project selection
+        function updateProjectSetupOptions() {
+            const projectDropdown = document.getElementById('project');
+            const selectedProject = projectDropdown.value;
+
+            // Make a request to your Django API endpoint to fetch project setups for the selected project
+            fetch('/run/get_project_setups/' + selectedProject + '/') // Assuming the endpoint is '/get_project_setups/'
+                .then(response => response.json())
+                .then(data => {
+                    const setupDropdown = document.getElementById('projectSetup');
+                    setupDropdown.innerHTML = ''; // Clear previous options
+                    console.log(data)
+
+                    if (data.projectSetups) { // Check if data.projectSetups exists
+                        data.projectSetups.forEach(setup => {
+                            const optionElement = document.createElement('option');
+                            optionElement.textContent = setup;
+                            setupDropdown.appendChild(optionElement);
+                        });
+                    } else {
+                        console.error('No project setups found for project:', selectedProject);
+                    }
+                })
+                .catch(error => console.error('Error fetching project setups:', error));
+        }
+
+        function fetchLatestBuildPaths() {
+            fetch('/run/get_latest_build_path/') // Assuming the endpoint is '/get_latest_build_path/'
+                .then(response => response.json())
+                .then(data => {
+                    const buildPathDropdown = document.getElementById('buildPath');
+                    buildPathDropdown.innerHTML = ''; // Clear previous options
+
+                    data.latestBuildPaths.forEach(path => {
+                        const optionElement = document.createElement('option');
+                        optionElement.textContent = path;
+                        buildPathDropdown.appendChild(optionElement);
+                    });
+                })
+                .catch(error => console.error('Error fetching latest build paths:', error));
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Check if the cookie name matches the specified name
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        // Extract and return the cookie value
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function submitForm(e) {
+
+            e.preventDefault();
+
+            const block = document.getElementById('block').value;
+            const project = document.getElementById('project').value;
+            const projectSetup = document.getElementById('projectSetup').value;
+            const buildPath = document.getElementById('buildPath').value;
+
+
+            // Construct form data to send to the backend
+            const formData = new FormData();
+            formData.append('block', block);
+            formData.append('project', project);
+            formData.append('projectSetup', projectSetup);
+            formData.append('buildPath', buildPath);
+
+            console.log(formData)
+
+            // Send form data to the backend using fetch API
+            const csrftoken = getCookie('csrftoken'); // Function to retrieve CSRF token from cookie
+            console.log(csrftoken)
+            fetch('/run/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken') // Get the CSRF token from cookie
+                },
+                body: formData // Send the form data directly
+            })
+            .then(response => response.text())
+            .then(data => {
+                // Handle response from the backend if needed
+                console.log(data);
+            })
+            .catch(error => console.error('Error submitting form:', error));
+        }
+
+
+        // Initial setup when the page is loaded
+        window.onload = function() {
+            fetchBlocks();
+            fetchLatestBuildPaths();
+        };
+    </script>
+</head>
+<body>
+    <form id="myForm" action="/run/" method="post">
+        {% csrf_token %}
+        <label for="block">Block:</label>
+        <select id="block" onchange="updateProjectOptions()">
+            <!-- Options will be populated dynamically -->
+        </select><br>
+    
+        <label for="project">Project:</label>
+        <select id="project" onchange="updateProjectSetupOptions()">
+            <!-- Options will be populated dynamically -->
+        </select><br>
+    
+        <label for="projectSetup">Project Setup:</label>
+        <select id="projectSetup">
+            <!-- Options will be populated dynamically -->
+        </select><br>
+    
+        <label for="buildPath">Build Path:</label>
+        <select id="buildPath">
+            <!-- Options will be populated dynamically -->
+        </select><br>
+    
+        <input type="submit" value="Run" onclick="submitForm(event)">
+    </form>
+</body>
+</html>
