@@ -3,7 +3,17 @@ trigger:
 
 pool:
   vmImage: 'ubuntu-latest'
+variables:
+  - name: block
+    value: 'tardis_top'
+  - name: project
+    value: 'KNG'
+  - name: buildPath
+    value: live
+  - name: projectSetup
+    value: 24ww13_PD0p8
 
+  
 steps:
 - script: |
     command="/home/scratch-kingsgate/tsmc003ffe/A0/pd/users/nareshvijay/launch_regression_run.zsh"
