@@ -1,0 +1,25 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- script: |
+    command="/home/scratch-kingsgate/tsmc003ffe/A0/pd/users/nareshvijay/launch_regression_run.zsh"
+    if [ -n "$(block)" ]; then
+      command+=" -b $(block)"
+    fi
+    if [ -n "$(project)" ]; then
+      command+=" -programs $(project)"
+    fi
+    if [ -n "$(buildPath)" ]; then
+      command+=" -build_path $(buildPath)"
+    fi
+    if [ -n "$(projectSetup)" ]; then
+      command+=" -project_setup $(projectSetup)"
+    fi
+    command+=" -once"
+    echo $command
+    eval $command
+  displayName: 'Run Custom Command'
